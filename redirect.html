@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>機能ページへリダイレクト中…</title>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    (async () => {
+      // 1) Supabase クライアント
+      const supabase = createClient(
+        'https://labmhtrafdslfwqmzgky.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...CviQ3lzngfvqDFwEtDw5cTRSEICWliunXngYCokhbNs'
+      );
+
+      // 2) 今日の日付文字列 YYYY-MM-DD
+      const today = new Date().toISOString().slice(0,10);
+
+      // 3) 当日の共有（find_comments への insert）件数を取得
+      const { count } = await supabase
+        .from('find_comments')
+        .select('id', { count: 'exact' })
+        .gte('created_at', `${today}T00:00:00Z`);
+
+      // 4) query param から “feature” を読む (jsuggestion, jquiz, jar)
+      const params = new URLSearchParams(window.location.search);
+      const feature = params.get('feature');
+
+      // 5) 移動先の Carrd ページ URL を組み立て
+      const base = 'https://nanpeigoryon.carrd.co/';
+      const target = `${base}?date=${today}#${feature}`;
+
+      // 6) 共有回数に応じてリダイレクト
+      if (
+        (feature === 'jsuggestion' && count >= 1) ||
+        (feature === 'jquiz'       && count >= 2) ||
+        (feature === 'jar'         && count >= 3)
+      ) {
+        window.location.href = target;
+      } else {
+        // 条件未達ならトップに戻す
+        alert('まだ条件を満たしていません。');
+        window.location.href = base;
+      }
+    })();
+  </script>
+</head>
+<body>
+  <p>ページを読み込み中です…</p>
+</body>
+</html>
